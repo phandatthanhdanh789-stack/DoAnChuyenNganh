@@ -1,11 +1,21 @@
-# Use the official PHP image with Composer
-FROM php:8.2-apache
-
-# Enable Apache mod_rewrite for Laravel routing
-RUN a2enmod rewrite
+# Stage 1: Build frontend assets
+FROM node:22 AS frontend
 
 # Set working directory
-WORKDIR /var/www/html
+WORKDIR /app
+
+# Copy only frontend-related files
+COPY package*.json vite.config.js postcss.config.js tailwind.config.js ./
+COPY resources ./resources
+
+# Install and build
+RUN npm install && npm run build
+
+# Stage 2: PHP Apache for Laravel
+FROM php:8.2-apache
+
+# Enable mod_rewrite
+RUN a2enmod rewrite
 
 # Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
@@ -15,14 +25,19 @@ RUN apt-get update && apt-get install -y \
 # Copy Composer from its official image
 COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
 
-# Copy app files
+# Set working directory
+WORKDIR /var/www/html
+
+# Copy application files
 COPY . .
 
-# Install dependencies
-RUN composer install --optimize-autoloader --no-dev
-RUN npm install && npm run build
+# Copy the built frontend assets from Node stage
+COPY --from=frontend /app/public/build ./public/build
 
-# Set Laravel permissions
+# Install PHP dependencies
+RUN composer install --optimize-autoloader --no-dev
+
+# Set permissions for Laravel
 RUN chown -R www-data:www-data storage bootstrap/cache
 
 # Expose port 80
