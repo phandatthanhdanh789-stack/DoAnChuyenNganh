@@ -1,47 +1,29 @@
-# Stage 1: Build frontend assets
-FROM node:22 AS frontend
+# Use the official PHP image with necessary extensions
+FROM php:8.2-fpm
 
-# Set working directory
-WORKDIR /app
-
-# Copy only frontend-related files
-COPY package*.json vite.config.js postcss.config.js tailwind.config.js ./
-COPY resources ./resources
-
-# Install and build
-RUN npm install && npm run build
-
-# Stage 2: PHP Apache for Laravel
-FROM php:8.2-apache
-
-# Enable mod_rewrite
-RUN a2enmod rewrite
-
-# Install system dependencies and PHP extensions
+# Install system dependencies + Node.js + npm
 RUN apt-get update && apt-get install -y \
-    git zip unzip libpq-dev libzip-dev libpng-dev libonig-dev libxml2-dev && \
-    docker-php-ext-install pdo pdo_mysql mbstring zip exif pcntl bcmath gd
+    git curl zip unzip libpng-dev libjpeg-dev libfreetype6-dev libonig-dev libxml2-dev gnupg \
+    && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd \
+    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g npm@latest
 
-# Copy Composer from its official image
+# Install Composer
 COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
 
-# Set working directory
-WORKDIR /var/www/html
-
-# Copy application files
+# Copy app files
+WORKDIR /var/www
 COPY . .
-
-# Copy the built frontend assets from Node stage
-COPY --from=frontend /app/public/build ./public/build
 
 # Install PHP dependencies
 RUN composer install --optimize-autoloader --no-dev
 
-# Set permissions for Laravel
-RUN chown -R www-data:www-data storage bootstrap/cache
+# Install Node dependencies and build assets
+RUN npm install && npm run build
 
-# Expose port 80
-EXPOSE 80
+# Expose port 8000 for Render
+EXPOSE 8000
 
-# Start Apache
-CMD ["apache2-foreground"]
+# Start Laravel
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
