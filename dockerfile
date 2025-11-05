@@ -12,18 +12,26 @@ RUN apt-get update && apt-get install -y \
 # Install Composer
 COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
 
-# Copy app files
+# Set working directory
 WORKDIR /var/www
+
+# Copy all project files
 COPY . .
 
 # Install PHP dependencies
 RUN composer install --optimize-autoloader --no-dev
 
+# Copy example environment and generate key (important!)
+RUN cp .env.example .env && php artisan key:generate
+
 # Install Node dependencies and build assets
 RUN npm install && npm run build
+
+# Optimize Laravel config
+RUN php artisan config:cache && php artisan route:cache && php artisan view:cache
 
 # Expose port 8000 for Render
 EXPOSE 8000
 
-# Start Laravel
+# Start Laravel server
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
