@@ -30,8 +30,11 @@ RUN npm install && npm run build
 # Optimize Laravel config
 RUN php artisan config:cache && php artisan route:cache && php artisan view:cache
 
+# Enable debug logs for Render
+ENV APP_ENV=local
+ENV APP_DEBUG=true
+
 # Expose port 8000 for Render
 EXPOSE 8000
 
-# Start Laravel server
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
