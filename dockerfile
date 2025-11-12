@@ -27,12 +27,6 @@ RUN cp .env.example .env && php artisan key:generate
 # Install Node dependencies and build assets
 RUN npm install && npm run build
 
-# Clear and cache Laravel config
-RUN php artisan config:clear \
-    && php artisan cache:clear \
-    && php artisan route:clear \
-    && php artisan view:clear
-
 # Expose port 8000 for Render
 EXPOSE 8000
 
@@ -40,5 +34,10 @@ EXPOSE 8000
 ENV APP_ENV=production
 ENV APP_DEBUG=false
 
-# Run migrations and start Laravel server
-CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000
+# Startup script: clear cache, run migrations, then start Laravel server
+CMD php artisan config:clear \
+    && php artisan cache:clear \
+    && php artisan route:clear \
+    && php artisan view:clear \
+    && php artisan migrate --force \
+    && php artisan serve --host=0.0.0.0 --port=8000
