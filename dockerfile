@@ -21,20 +21,24 @@ COPY . .
 # Install PHP dependencies
 RUN composer install --optimize-autoloader --no-dev
 
-# Copy example environment and generate key (important!)
+# Copy example environment and generate key if not exists
 RUN cp .env.example .env && php artisan key:generate
 
 # Install Node dependencies and build assets
 RUN npm install && npm run build
 
-# Optimize Laravel config
-RUN php artisan config:cache && php artisan route:cache && php artisan view:cache
-
-# Enable debug logs for Render
-ENV APP_ENV=local
-ENV APP_DEBUG=true
+# Clear and cache Laravel config
+RUN php artisan config:clear \
+    && php artisan cache:clear \
+    && php artisan route:clear \
+    && php artisan view:clear
 
 # Expose port 8000 for Render
 EXPOSE 8000
 
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+# Use environment variables provided by Render for MySQL connection
+ENV APP_ENV=production
+ENV APP_DEBUG=false
+
+# Run migrations and start Laravel server
+CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=8000
