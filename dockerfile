@@ -21,15 +21,16 @@ COPY . .
 # Install PHP dependencies
 RUN composer install --optimize-autoloader --no-dev
 
+# Use environment variables provided by Render for MySQL connection
+ENV APP_ENV=production
+ENV APP_DEBUG=false
+ENV APP_URL=https://doanchuyennganh-fo98.onrender.com
+
 # Install Node dependencies and build assets
 RUN npm install && npm run build
 
 # Expose port 8000 for Render
 EXPOSE 8000
-
-# Use environment variables provided by Render for MySQL connection
-ENV APP_ENV=production
-ENV APP_DEBUG=false
 
 # Startup script: clear cache, run migrations, then start Laravel server
 CMD php artisan config:clear \
