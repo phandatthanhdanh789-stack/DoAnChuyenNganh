@@ -22,7 +22,7 @@ COPY . .
 RUN composer install --optimize-autoloader --no-dev
 
 # Copy example environment and generate key if not exists
-RUN cp .env.example .env && php artisan key:generate
+RUN php artisan key:generate --ansi
 
 # Install Node dependencies and build assets
 RUN npm install && npm run build
