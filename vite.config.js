@@ -22,7 +22,7 @@ export default defineConfig(({ command, mode }) => {
                 },
             }),
         ],
-        base: isProduction ? '/' : '/',
+        base: isProduction ? '/build/' : '/',
         server: {
             https: true,
             host: '0.0.0.0',
