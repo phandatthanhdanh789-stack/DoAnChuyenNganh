@@ -1,4 +1,4 @@
-# Use official PHP image
+# Use the official PHP image with necessary extensions
 FROM php:8.2-fpm
 
 # Install system dependencies + Node.js + npm
@@ -15,26 +15,24 @@ COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www
 
-# Copy composer files first to leverage Docker cache
-COPY composer.json composer.lock ./
-RUN composer install --optimize-autoloader --no-dev
-
-# Copy rest of the project
+# Copy all project files
 COPY . .
 
-# Set environment variables (default for container)
+# Install PHP dependencies
+RUN composer install --optimize-autoloader --no-dev
+
+# Use environment variables provided by Render for MySQL connection
 ENV APP_ENV=production
 ENV APP_DEBUG=false
 ENV APP_URL=https://doanchuyennganh-fo98.onrender.com
-ENV ASSET_URL=https://doanchuyennganh-fo98.onrender.com
 
-# Install Node dependencies + build assets
+# Install Node dependencies and build assets
 RUN npm install && npm run build
 
-# Expose port for Render
+# Expose port 8000 for Render
 EXPOSE 8000
 
-# Startup command: clear cache, run migrations, start server
+# Startup script: clear cache, run migrations, then start Laravel server
 CMD php artisan config:clear \
     && php artisan cache:clear \
     && php artisan route:clear \
