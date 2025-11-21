@@ -24,7 +24,7 @@ export default defineConfig(({ command, mode }) => {
         ],
         base: isProduction ? '/' : '/',
         server: {
-            https: false,
+            https: true,
             host: '0.0.0.0',
             port: 5173,
         },
